@@ -41,7 +41,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing conversation contents.' });
   }
 
-  const model = process.env.TEXT_MODEL || 'gemini-2.5-flash-lite';
+  const model = process.env.TEXT_MODEL || 'gemini-3.5-flash-lite';
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
