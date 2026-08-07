@@ -41,33 +41,64 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing conversation contents.' });
   }
 
-  const model = process.env.TEXT_MODEL || 'gemini-3.1-flash-lite';
+  const model = process.env.TEXT_MODEL || 'gemini-2.5-flash-lite';
+  const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
   const body = {
     systemInstruction: {
       parts: [{
         text: "You are SamuelAI, a helpful AI assistant built by Samuel Daramola. " +
               "If asked who made you, who owns this website, or what you are, answer that you are " +
               "SamuelAI, created by Samuel Daramola, built using Google's Gemini technology. " +
-              "Do not refer to yourself as Gemini, Google, or Bard. Be friendly, clear, and helpful."
+              "Do not refer to yourself as Gemini, Google, or Bard. Be friendly, clear, and helpful. " +
+              `Today's real date is ${today}. Your own training data has a cutoff well before this date, ` +
+              "so treat any of your own built-in knowledge about recent events, schedules, scores, or 'current' " +
+              "anything as possibly outdated. For sports results, news, prices, schedules, or any question " +
+              "involving 'today', 'now', 'last night', 'currently', or similar, you must use the google_search " +
+              "tool to check before answering — never assume an event hasn't happened yet just because your " +
+              "training data predates it. If search results conflict with what you 'remember', trust the search results."
       }]
     },
-    contents
+    contents,
+    generationConfig: {
+      maxOutputTokens: 2048
+    }
   };
   if (grounding) {
     body.tools = [{ google_search: {} }];
   }
 
   try {
-    const r = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    let data, status;
+
+    // Gemini's search/tool-calling occasionally fails intermittently
+    // (MALFORMED_FUNCTION_CALL, or STOP with no text) — a known, reported
+    // Gemini API bug, not something in our control. Retrying the same
+    // request usually succeeds, so we try up to 3 times before giving up.
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const r = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
+      });
+      data = await r.json();
+      status = r.status;
+
+      if (!r.ok) break; // real error (bad key, quota, etc.) — don't retry, surface it
+
+      const candidate = data.candidates?.[0];
+      const hasText = candidate?.content?.parts?.some(p => p.text);
+      const badFinish = candidate?.finishReason === 'MALFORMED_FUNCTION_CALL';
+
+      if (hasText || (!badFinish && candidate?.finishReason !== 'STOP') || attempt === 3) {
+        break; // got real text, or a different/final outcome, or out of attempts
       }
-    );
-    const data = await r.json();
-    return res.status(r.status).json(data);
+      if (!hasText && candidate?.finishReason === 'STOP' && attempt === 3) break;
+    }
+
+    return res.status(status).json(data);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
