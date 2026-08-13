@@ -296,19 +296,26 @@
   .send-btn:hover, .imagine-btn:hover{transform:scale(1.06); box-shadow:0 0 0 4px rgba(201,162,39,0.15);}
   .send-btn:active, .imagine-btn:active{transform:scale(0.94);}
   .send-btn:disabled, .imagine-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+  .imagine-btn .aperture{width:18px;height:18px;}
+  .imagine-btn .aperture.thinking{display:block !important;}
+  .imagine-btn .aperture circle.ring{stroke:#1a1408; animation: spin 0.9s linear infinite; transform-origin:center;}
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .imagine-btn.loading #imagine-btn-icon{display:none;}
+  .imagine-btn:not(.loading) .aperture{display:none !important;}
 
   /* ---- Imagine panel ---- */
   #imagine-panel{padding:24px 10%;overflow-y:auto;}
   .imagine-intro{text-align:center;margin-bottom:22px;}
   .imagine-intro h2{font-size:22px;color:var(--text);margin-bottom:6px;}
   .imagine-intro p{color:var(--text-faint);font-size:13.5px;}
-  .imagine-form{display:flex;gap:10px;max-width:640px;margin:0 auto 30px auto;}
-  .imagine-form input{
+  .imagine-form{display:flex;gap:10px;max-width:640px;margin:0 auto 30px auto;align-items:flex-end;}
+  .imagine-form textarea{
     flex:1;background:var(--bg-input);border:1px solid var(--line);
     border-radius:10px;padding:12px 14px;color:var(--text);font-family:inherit;font-size:14px;
+    resize:none;max-height:160px;min-height:44px;line-height:1.4;
     transition:border-color .2s ease, box-shadow .2s ease;
   }
-  .imagine-form input:focus{outline:none;border-color:var(--brass-dim); box-shadow:0 0 0 3px rgba(201,162,39,0.12);}
+  .imagine-form textarea:focus{outline:none;border-color:var(--brass-dim); box-shadow:0 0 0 3px rgba(201,162,39,0.12);}
   .image-grid{
     display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
     gap:16px;max-width:1000px;margin:0 auto;
@@ -456,7 +463,7 @@
     #imagine-panel{ padding:16px 4%; }
     .imagine-intro h2{ font-size:19px; }
     .imagine-form{ flex-direction:column; }
-    .imagine-form input{ width:100%; }
+    .imagine-form textarea{ width:100%; }
     .image-grid{ grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:10px; }
 
     .modal{ width:92vw; padding:20px; }
@@ -526,8 +533,9 @@
       <p>Describe a scene, style, or idea — SamuelAI will render it.</p>
     </div>
     <div class="imagine-form">
-      <input type="text" id="imagine-input" placeholder="e.g. a lighthouse at dawn, watercolor style">
+      <textarea id="imagine-input" placeholder="e.g. a lighthouse at dawn, watercolor style" rows="1"></textarea>
       <button class="imagine-btn" id="imagine-btn" onclick="generateImage()">
+        <svg id="imagine-btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12L20 4L13 20L11 13L4 12Z" fill="#1a1408"/></svg>
         <div class="aperture" id="imagine-aperture"><svg viewBox="0 0 22 22"><circle class="ring" cx="11" cy="11" r="9.5"/></svg></div>
       </button>
     </div>
@@ -1179,9 +1187,8 @@ function generateImage(){
 
   const grid = document.getElementById('image-grid');
   const btn = document.getElementById('imagine-btn');
-  const aperture = document.getElementById('imagine-aperture');
   btn.disabled = true;
-  aperture.classList.add('thinking');
+  btn.classList.add('loading');
 
   const pending = document.createElement('div');
   pending.className = 'image-card pending';
@@ -1201,7 +1208,7 @@ function generateImage(){
         <a href="${imageUrl}" target="_blank" rel="noopener">Open</a>
       </div>`;
     btn.disabled = false;
-    aperture.classList.remove('thinking');
+    btn.classList.remove('loading');
   };
   img.onerror = () => {
     pending.classList.remove('pending');
@@ -1210,14 +1217,15 @@ function generateImage(){
     pending.style.fontSize = '12.5px';
     pending.textContent = "Couldn't generate that image — free image generation is rate-limited to about one request per 15 seconds, so wait a moment and try again.";
     btn.disabled = false;
-    aperture.classList.remove('thinking');
+    btn.classList.remove('loading');
   };
   img.src = imageUrl;
 }
 
 document.getElementById('imagine-input').addEventListener('keydown', (e) => {
-  if(e.key === 'Enter'){ e.preventDefault(); generateImage(); }
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); generateImage(); }
 });
+document.getElementById('imagine-input').addEventListener('input', function(){ autoGrow(this); });
 
 /* ---------------------------------------------------------
    INIT
