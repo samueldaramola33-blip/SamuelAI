@@ -158,10 +158,10 @@
     cursor:pointer;transition:all .15s ease;
   }
   .mode-toggle button.active{background:var(--brass); color:#1a1408; font-weight:600;}
-  .grounding-toggle{
-    display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);
+  .knowledge-note{
+    font-size:11.5px;color:var(--text-faint);cursor:default;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
-  .grounding-toggle input{accent-color:var(--brass);}
   .account-btn{
     background:var(--bg-input);border:1px solid var(--line);color:var(--text-dim);
     border-radius:8px;padding:7px 14px;font-family:inherit;font-size:12.5px;cursor:pointer;
@@ -396,8 +396,7 @@
     .main{ width:100%; }
 
     .topbar{ padding:12px 14px; }
-    .grounding-toggle span{ display:none; }
-    .grounding-toggle::after{ content:"Live web"; font-size:11.5px; color:var(--text-dim); }
+    .knowledge-note{ display:none; }
     .mode-toggle button{ padding:7px 12px; font-size:12.5px; }
 
     #chat-log{ padding:18px 4%; gap:14px; }
@@ -447,10 +446,9 @@
       <button id="tab-chat" class="active" onclick="setMode('chat')">Chat</button>
       <button id="tab-imagine" onclick="setMode('imagine')">Imagine</button>
     </div>
-    <label class="grounding-toggle">
-      <input type="checkbox" id="grounding-checkbox" checked>
-      <span>Check the live web for accuracy</span>
-    </label>
+    <div class="knowledge-note" title="SamuelAI automatically checks the live web for questions about current events, scores, news, and similar.">
+      Live web check: on for current-events questions
+    </div>
     <button class="account-btn" id="account-btn" onclick="openSettings('account')">
       <span id="account-btn-label">Log in</span>
     </button>
@@ -1080,11 +1078,7 @@ async function sendChat(){
       return { role: m.role === 'ai' ? 'model' : 'user', parts };
     });
 
-  const useGrounding = document.getElementById('grounding-checkbox').checked;
   const body = { contents };
-  if(useGrounding){
-    body.tools = [{ google_search: {} }];
-  }
 
   try {
     const res = await fetch('/api/chat', {
@@ -1100,12 +1094,7 @@ async function sendChat(){
     const replyText = candidate?.content?.parts?.map(p => p.text).filter(Boolean).join('\n')
       || `(No response returned — reason: ${candidate?.finishReason || 'unknown'}. Try rephrasing or asking again.)`;
 
-    // Pull grounding sources if present
-    let sources = [];
-    const chunks = candidate?.groundingMetadata?.groundingChunks || [];
-    chunks.forEach(c => { if(c.web?.uri) sources.push(c.web.uri); });
-
-    session.messages.push({ role:'ai', text: replyText, sources });
+    session.messages.push({ role:'ai', text: replyText });
   } catch(err){
     session.messages.push({ role:'ai', text: 'Something went wrong: ' + err.message, error: true });
   } finally {
