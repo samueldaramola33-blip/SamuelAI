@@ -4,6 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SamuelAI — Ask anything. See anything.</title>
+<meta name="description" content="SamuelAI is a free AI assistant — chat, get live current-events answers, and generate images. No sign-up required to start.">
+<meta name="theme-color" content="#0B1614">
+
+<!-- Favicons (place these files next to index.html on your server — see BRAND_ASSETS.md) -->
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-180.png">
+
+<!-- Social share preview (WhatsApp, Twitter/X, LinkedIn, Facebook, etc.) -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="SamuelAI — Ask anything. See anything.">
+<meta property="og:description" content="A free AI assistant — chat, live current-events answers, and text-to-image generation. No sign-up required to start.">
+<meta property="og:image" content="/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SamuelAI — Ask anything. See anything.">
+<meta name="twitter:description" content="A free AI assistant — chat, live current-events answers, and text-to-image generation.">
+<meta name="twitter:image" content="/og-image.png">
+
 <style>
   :root{
     --bg: #0B1614;
@@ -289,6 +308,15 @@
   }
   .empty-state h2{color:var(--text-dim);font-size:22px;margin-bottom:8px;}
   .empty-state p{font-size:13.5px;line-height:1.6;}
+  .example-prompts{
+    display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:20px;
+  }
+  .example-chip{
+    background:var(--bg-input);border:1px solid var(--line);color:var(--text-dim);
+    border-radius:20px;padding:8px 15px;font-family:inherit;font-size:12.5px;
+    cursor:pointer;transition:all .15s ease;
+  }
+  .example-chip:hover{border-color:var(--brass-dim);color:var(--text);transform:translateY(-1px);}
   .msg{max-width:78%;line-height:1.55;font-size:14.5px;}
   .msg.user{align-self:flex-end;background:var(--brass); color:#1a1408; padding:11px 15px;border-radius:14px 14px 3px 14px; transition:transform .15s ease;}
   .msg.ai{align-self:flex-start;background:color-mix(in srgb, var(--bg-raised) 82%, transparent); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid var(--line); padding:11px 15px;border-radius:14px 14px 14px 3px; white-space:pre-wrap; transition:transform .15s ease, border-color .15s ease;}
@@ -561,6 +589,24 @@
 </head>
 <body>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EDCB6C"/>
+      <stop offset="55%" stop-color="#C9A227"/>
+      <stop offset="100%" stop-color="#8A711F"/>
+    </linearGradient>
+    <symbol id="logo-mark" viewBox="0 0 200 200">
+      <path d="M 173.30,51.30 A 88.00,88.00 0 0 1 173.30,148.70 L 126.97,129.54 L 137.68,86.58 Z" fill="url(#goldGrad)"/>
+      <path d="M 178.82,139.13 A 88.00,88.00 0 0 1 94.47,187.83 L 87.91,138.13 L 130.46,125.92 Z" fill="url(#goldGrad)"/>
+      <path d="M 105.53,187.83 A 88.00,88.00 0 0 1 21.18,139.13 L 60.93,108.59 L 92.78,139.34 Z" fill="url(#goldGrad)"/>
+      <path d="M 26.70,148.70 A 88.00,88.00 0 0 1 26.70,51.30 L 73.03,70.46 L 62.32,113.42 Z" fill="url(#goldGrad)"/>
+      <path d="M 21.18,60.87 A 88.00,88.00 0 0 1 105.53,12.17 L 112.09,61.87 L 69.54,74.08 Z" fill="url(#goldGrad)"/>
+      <path d="M 94.47,12.17 A 88.00,88.00 0 0 1 178.82,60.87 L 139.07,91.41 L 107.22,60.66 Z" fill="url(#goldGrad)"/>
+    </symbol>
+  </defs>
+</svg>
+
 <div class="ambient-bg" aria-hidden="true">
   <div class="aurora-layer">
     <span class="aurora aurora-gold"></span>
@@ -573,7 +619,7 @@
 
 <div class="sidebar" id="sidebar">
   <div class="brand">
-    <div class="aperture"><svg viewBox="0 0 22 22"><circle class="ring" cx="11" cy="11" r="9.5"/></svg></div>
+    <div class="aperture"><svg viewBox="0 0 200 200"><use href="#logo-mark"/></svg></div>
     <div class="name display">SamuelAI</div>
   </div>
   <button class="new-chat-btn" onclick="newChat(); closeSidebar();">+ New chat</button>
@@ -1098,11 +1144,20 @@ function renderChatLog(animateLastIndex){
   const session = getActiveSession();
   log.innerHTML = "";
   if(!session || session.messages.length === 0){
+    const examples = [
+      "Explain quantum computing like I'm 12",
+      "Who won the World Cup?",
+      "Draft a WhatsApp message to a client",
+      "Give me 5 business ideas for Lagos"
+    ];
     log.innerHTML = `
       <div class="empty-state">
-        <div class="aperture"><svg viewBox="0 0 22 22"><circle class="ring" cx="11" cy="11" r="9.5"/></svg></div>
+        <div class="aperture"><svg viewBox="0 0 200 200"><use href="#logo-mark"/></svg></div>
         <h2 class="display">Ask anything</h2>
-        <p>Start a conversation below. Turn on "check the live web" for questions where current, verifiable facts matter.</p>
+        <p>Free AI chat with live current-events answers — no sign-up needed to start.</p>
+        <div class="example-prompts">
+          ${examples.map(ex => `<button class="example-chip" onclick="useExamplePrompt(this)">${escapeHtml(ex)}</button>`).join('')}
+        </div>
       </div>`;
     return;
   }
@@ -1190,6 +1245,13 @@ function setTheme(name){
 /* ---------------------------------------------------------
    CHAT — calls Gemini generateContent
 --------------------------------------------------------- */
+function useExamplePrompt(btn){
+  const input = document.getElementById('chat-input');
+  input.value = btn.textContent;
+  autoGrow(input);
+  input.focus();
+}
+
 async function sendChat(){
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
@@ -1335,6 +1397,7 @@ window.showSettingsTab = showSettingsTab;
 window.setMode = setMode;
 window.handleFileSelect = handleFileSelect;
 window.sendChat = sendChat;
+window.useExamplePrompt = useExamplePrompt;
 window.generateImage = generateImage;
 window.setTheme = setTheme;
 window.loginWithGoogle = loginWithGoogle;

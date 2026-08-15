@@ -1,0 +1,22 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EDCB6C"/>
+      <stop offset="55%" stop-color="#C9A227"/>
+      <stop offset="100%" stop-color="#8A711F"/>
+    </linearGradient>
+    <radialGradient id="bgGrad" cx="35%" cy="28%" r="85%">
+      <stop offset="0%" stop-color="#17281F"/>
+      <stop offset="100%" stop-color="#0B1614"/>
+    </radialGradient>
+  </defs>
+  <rect x="0" y="0" width="200" height="200" rx="44" fill="url(#bgGrad)"/>
+  <g>
+    <path d="M 173.30,51.30 A 88.00,88.00 0 0 1 173.30,148.70 L 126.97,129.54 L 137.68,86.58 Z" fill="url(#goldGrad)"/>
+  <path d="M 178.82,139.13 A 88.00,88.00 0 0 1 94.47,187.83 L 87.91,138.13 L 130.46,125.92 Z" fill="url(#goldGrad)"/>
+  <path d="M 105.53,187.83 A 88.00,88.00 0 0 1 21.18,139.13 L 60.93,108.59 L 92.78,139.34 Z" fill="url(#goldGrad)"/>
+  <path d="M 26.70,148.70 A 88.00,88.00 0 0 1 26.70,51.30 L 73.03,70.46 L 62.32,113.42 Z" fill="url(#goldGrad)"/>
+  <path d="M 21.18,60.87 A 88.00,88.00 0 0 1 105.53,12.17 L 112.09,61.87 L 69.54,74.08 Z" fill="url(#goldGrad)"/>
+  <path d="M 94.47,12.17 A 88.00,88.00 0 0 1 178.82,60.87 L 139.07,91.41 L 107.22,60.66 Z" fill="url(#goldGrad)"/>
+  </g>
+</svg>
