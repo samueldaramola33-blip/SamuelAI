@@ -59,6 +59,45 @@
     from{ opacity:0; }
     to{ opacity:1; }
   }
+
+  /* ---------------------------------------------------------
+     AMBIENT BACKGROUND — soft floating glow orbs, purely
+     decorative, sits behind everything, never blocks clicks.
+  --------------------------------------------------------- */
+  .ambient-bg{
+    position:fixed; inset:0; z-index:0; overflow:hidden;
+    pointer-events:none;
+  }
+  .ambient-bg .orb{
+    position:absolute; border-radius:50%;
+    filter:blur(60px);
+    opacity:0.16;
+    background:var(--brass);
+  }
+  .orb-1{ width:340px; height:340px; top:-8%; left:6%; animation: floatA 22s ease-in-out infinite; }
+  .orb-2{ width:260px; height:260px; top:55%; left:82%; animation: floatB 26s ease-in-out infinite; background:var(--text); opacity:0.06; }
+  .orb-3{ width:220px; height:220px; top:75%; left:12%; animation: floatC 19s ease-in-out infinite; }
+  .orb-4{ width:180px; height:180px; top:10%; left:70%; animation: floatA 30s ease-in-out infinite reverse; opacity:0.1; }
+
+  @keyframes floatA{
+    0%,100%{ transform:translate(0,0) scale(1); }
+    33%{ transform:translate(30px,40px) scale(1.08); }
+    66%{ transform:translate(-20px,20px) scale(0.95); }
+  }
+  @keyframes floatB{
+    0%,100%{ transform:translate(0,0) scale(1); }
+    50%{ transform:translate(-45px,-30px) scale(1.12); }
+  }
+  @keyframes floatC{
+    0%,100%{ transform:translate(0,0) scale(1); }
+    40%{ transform:translate(25px,-35px) scale(1.06); }
+    70%{ transform:translate(-15px,15px) scale(0.92); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .ambient-bg .orb{ animation:none !important; }
+  }
+
+  .sidebar, .main{ position:relative; z-index:1; }
   @font-face{
     font-family:'Fraunces';
     src: local('Georgia');
@@ -479,6 +518,13 @@
 </style>
 </head>
 <body>
+
+<div class="ambient-bg" aria-hidden="true">
+  <span class="orb orb-1"></span>
+  <span class="orb orb-2"></span>
+  <span class="orb orb-3"></span>
+  <span class="orb orb-4"></span>
+</div>
 
 <div class="sidebar" id="sidebar">
   <div class="brand">
