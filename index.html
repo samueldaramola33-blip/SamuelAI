@@ -453,6 +453,7 @@
   }
   .modal-backdrop.open{display:flex; opacity:1;}
   .modal{
+    position:relative;
     background:color-mix(in srgb, var(--bg-raised) 88%, transparent);
     backdrop-filter:blur(28px) saturate(140%);
     -webkit-backdrop-filter:blur(28px) saturate(140%);
@@ -460,6 +461,15 @@
     padding:26px;width:400px;max-width:90vw;
     animation: modalIn 0.25s cubic-bezier(0.2, 0.8, 0.3, 1);
   }
+  .modal-close{
+    position:absolute; top:14px; right:14px;
+    width:28px; height:28px; border-radius:8px;
+    background:none; border:none; color:var(--text-faint);
+    font-size:22px; line-height:1; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:background .15s ease, color .15s ease;
+  }
+  .modal-close:hover{background:var(--bg-input); color:var(--text);}
   @keyframes modalIn{
     from{ opacity:0; transform:scale(0.94) translateY(8px); }
     to{ opacity:1; transform:scale(1) translateY(0); }
@@ -681,8 +691,9 @@
 </div>
 
 <!-- Settings modal -->
-<div class="modal-backdrop" id="settings-modal">
+<div class="modal-backdrop" id="settings-modal" onclick="if(event.target===this) closeSettings()">
   <div class="modal">
+    <button class="modal-close" onclick="closeSettings()" aria-label="Close settings">&times;</button>
     <h3 class="display">Settings</h3>
     <div class="settings-tabs">
       <button id="tab-settings-account" class="active" onclick="showSettingsTab('account')">Account</button>
@@ -749,8 +760,10 @@
     <div class="settings-section" id="section-about">
       <p class="hint">
         SamuelAI is free to use — chat and image generation run through a shared backend,
-        so there's nothing to sign up for or configure just to use it. To keep things fair
-        for everyone, usage is capped per visitor per day. If you hit a limit, just come back tomorrow.
+        so you can start chatting or generating images right away with no sign-up required.
+        Creating a free account is optional — it just lets you save your chat history and
+        pick it back up on any device. To keep things fair for everyone, usage is capped per
+        visitor per day. If you hit a limit, just come back tomorrow.
       </p>
       <div class="modal-actions">
         <button class="btn-primary" onclick="closeSettings()">Got it</button>
