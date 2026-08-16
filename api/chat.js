@@ -119,18 +119,75 @@ export default async function handler(req, res) {
     generationConfig: { maxOutputTokens: 2048 }
   };
 
+  // Use Gemini's streaming endpoint (Server-Sent Events) so the visitor sees
+  // the answer appear progressively, instead of waiting for the whole thing.
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
+
+  let geminiRes;
   try {
-    const r = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      }
-    );
-    const data = await r.json();
-    return res.status(r.status).json(data);
+    geminiRes = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
+
+  if (!geminiRes.ok) {
+    let errData = {};
+    try { errData = await geminiRes.json(); } catch (e) { /* ignore */ }
+    return res.status(geminiRes.status).json(errData);
+  }
+
+  // From here on we're streaming plain text chunks straight to the browser —
+  // this response is no longer JSON, it's just the raw answer text arriving
+  // piece by piece as Gemini generates it.
+  res.writeHead(200, {
+    'Content-Type': 'text/plain; charset=utf-8',
+    'Cache-Control': 'no-cache, no-transform',
+    'X-Accel-Buffering': 'no'
+  });
+
+  const reader = geminiRes.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let gotAnyText = false;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      // Gemini's SSE stream sends lines like: "data: {...json...}\n\n"
+      const lines = buffer.split('\n');
+      buffer = lines.pop(); // keep any incomplete trailing line for next round
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data:')) continue;
+        const jsonStr = trimmed.slice(5).trim();
+        if (!jsonStr) continue;
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const piece = parsed?.candidates?.[0]?.content?.parts
+            ?.map(p => p.text).filter(Boolean).join('') || '';
+          if (piece) {
+            gotAnyText = true;
+            res.write(piece);
+          }
+        } catch (e) {
+          // Partial/incomplete JSON chunk — safe to skip, next chunk will complete it
+        }
+      }
+    }
+  } catch (err) {
+    res.write(`\n\n[Connection interrupted: ${err.message}]`);
+  }
+
+  if (!gotAnyText) {
+    res.write('(No response returned. Try rephrasing or asking again.)');
+  }
+  res.end();
 }
