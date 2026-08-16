@@ -95,6 +95,14 @@
     filter:blur(90px) saturate(130%);
     mix-blend-mode:screen;
   }
+  /* "Screen" blend brightens — great on a dark background, but it washes
+     out to near-invisible on a light one. Light theme needs "multiply"
+     (which darkens toward the color) plus stronger, more saturated stops. */
+  body.theme-light .ambient-bg .aurora-layer{
+    mix-blend-mode:multiply;
+    filter:blur(90px) saturate(160%);
+    opacity:0.85;
+  }
   .ambient-bg .aurora{
     position:absolute; border-radius:50%;
   }
@@ -117,6 +125,21 @@
     width:35vw; height:35vw; top:45%; left:35%;
     background:radial-gradient(circle, rgba(237,230,214,0.22) 0%, rgba(237,230,214,0) 70%);
     animation: driftPale 46s ease-in-out infinite;
+  }
+  /* Light theme: bump saturation/opacity on each color stop so they read
+     clearly under multiply blending; swap the pale (near-white) orb for a
+     warm tone since near-white multiplied over a light bg is invisible. */
+  body.theme-light .aurora-gold{
+    background:radial-gradient(circle, rgba(201,162,39,0.7) 0%, rgba(201,162,39,0) 70%);
+  }
+  body.theme-light .aurora-teal{
+    background:radial-gradient(circle, rgba(45,150,130,0.55) 0%, rgba(45,150,130,0) 70%);
+  }
+  body.theme-light .aurora-rust{
+    background:radial-gradient(circle, rgba(196,82,72,0.5) 0%, rgba(196,82,72,0) 70%);
+  }
+  body.theme-light .aurora-pale{
+    background:radial-gradient(circle, rgba(168,121,14,0.4) 0%, rgba(168,121,14,0) 70%);
   }
 
   @keyframes driftGold{
@@ -635,7 +658,7 @@
   <button class="new-chat-btn" onclick="newChat(); closeSidebar();">+ New chat</button>
   <div class="session-list" id="session-list"></div>
   <div class="sidebar-footer">
-    <button class="settings-btn" onclick="openSettings('about')">ⓘ About SamuelAI</button>
+    <button class="settings-btn" onclick="openSettings()">⚙ Settings</button>
   </div>
 </div>
 <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
@@ -1303,27 +1326,68 @@ async function sendChat(){
 
   const body = { contents };
 
+  // Placeholder AI message we fill in live as the stream arrives, rather
+  // than waiting for the whole answer before showing anything.
+  const aiMessage = { role:'ai', text:'' };
+  session.messages.push(aiMessage);
+  const log = document.getElementById('chat-log');
+  let bubbleEl = null;
+
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
-    const data = await res.json();
-    if(!res.ok){
-      throw new Error((typeof data?.error === 'string' ? data.error : data?.error?.message) || `Request failed (${res.status})`);
-    }
-    const candidate = data.candidates?.[0];
-    const replyText = candidate?.content?.parts?.map(p => p.text).filter(Boolean).join('\n')
-      || `(No response returned — reason: ${candidate?.finishReason || 'unknown'}. Try rephrasing or asking again.)`;
 
-    session.messages.push({ role:'ai', text: replyText });
+    if(!res.ok){
+      let errData = {};
+      try { errData = await res.json(); } catch(e){ /* ignore */ }
+      throw new Error((typeof errData?.error === 'string' ? errData.error : errData?.error?.message) || `Request failed (${res.status})`);
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+
+    while(true){
+      const { done, value } = await reader.read();
+      if(done) break;
+      const chunk = decoder.decode(value, { stream:true });
+      if(!chunk) continue;
+
+      if(!bubbleEl){
+        // First piece of real text arrived — swap the typing dots for the
+        // actual message bubble and start filling it in live.
+        hideTypingIndicator();
+        bubbleEl = document.createElement('div');
+        bubbleEl.className = 'msg ai msg-enter';
+        log.appendChild(bubbleEl);
+      }
+
+      aiMessage.text += chunk;
+      bubbleEl.innerHTML = markdownToHtml(aiMessage.text);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    if(!aiMessage.text){
+      aiMessage.text = "(No response returned. Try rephrasing or asking again.)";
+      renderChatLog(session.messages.length - 1);
+    }
   } catch(err){
-    session.messages.push({ role:'ai', text: 'Something went wrong: ' + err.message, error: true });
+    hideTypingIndicator();
+    if(aiMessage.text && bubbleEl){
+      // Some text streamed before the connection dropped — keep it and
+      // append a note, rather than throwing the partial answer away.
+      aiMessage.text += `\n\n(Connection interrupted: ${err.message})`;
+      bubbleEl.innerHTML = markdownToHtml(aiMessage.text);
+    } else {
+      aiMessage.text = 'Something went wrong: ' + err.message;
+      aiMessage.error = true;
+      renderChatLog(session.messages.length - 1);
+    }
   } finally {
     hideTypingIndicator();
     sendBtn.disabled = false;
-    renderChatLog(session.messages.length - 1);
     saveActiveSessionToFirestore();
   }
 }
