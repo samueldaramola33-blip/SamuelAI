@@ -236,17 +236,47 @@
   }
   .new-chat-btn:hover{background:rgba(201,162,39,0.08); border-color:var(--brass); transform:translateY(-1px);}
   .new-chat-btn:active{transform:translateY(0) scale(0.97);}
+  .session-search{
+    display:flex; align-items:center; gap:8px;
+    margin:4px 14px 6px 14px; padding:7px 10px;
+    background:var(--bg-input); border:1px solid var(--line); border-radius:8px;
+    color:var(--text-faint);
+  }
+  .session-search input{
+    flex:1; background:none; border:none; color:var(--text); font-family:inherit;
+    font-size:12.5px; outline:none;
+  }
+  .session-search input::placeholder{ color:var(--text-faint); }
   .session-list{
     flex:1;overflow-y:auto;padding:6px 10px;
   }
+  .session-empty{ padding:14px 10px; font-size:12px; color:var(--text-faint); text-align:center; }
   .session-item{
+    display:flex; align-items:center; justify-content:space-between; gap:6px;
     padding:9px 10px;margin-bottom:2px;border-radius:7px;
     font-size:13px;color:var(--text-dim);
-    cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    cursor:pointer;
     transition:background .15s ease, color .15s ease, transform .15s ease, padding-left .15s ease;
   }
   .session-item:hover{background:var(--bg-input); color:var(--text); transform:translateX(2px);}
   .session-item.active{background:var(--bg-input); color:var(--text); border-left:2px solid var(--brass); padding-left:8px;}
+  .session-title{
+    flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .session-item-actions{
+    display:flex; gap:2px; flex-shrink:0; opacity:0; transition:opacity .15s ease;
+  }
+  .session-item:hover .session-item-actions{ opacity:1; }
+  .session-icon-btn{
+    background:none; border:none; color:var(--text-faint); cursor:pointer;
+    padding:4px; border-radius:5px; display:flex; align-items:center; justify-content:center;
+    transition:background .15s ease, color .15s ease;
+  }
+  .session-icon-btn:hover{ background:var(--bg-raised); color:var(--brass); }
+  .session-rename-input{
+    width:100%; background:var(--bg-raised); border:1px solid var(--brass-dim); border-radius:6px;
+    padding:5px 8px; color:var(--text); font-family:inherit; font-size:13px; outline:none;
+  }
   .sidebar-footer{
     padding:12px 14px;border-top:1px solid var(--line);
   }
@@ -297,6 +327,10 @@
     font-size:11.5px;color:var(--text-faint);cursor:default;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
+  .quota-note{
+    font-size:11.5px;color:var(--text-faint);cursor:default;white-space:nowrap;flex-shrink:0;
+  }
+  .quota-note.low{ color:var(--error); }
   .account-btn{
     background:var(--bg-input);border:1px solid var(--line);color:var(--text-dim);
     border-radius:8px;padding:7px 14px;font-family:inherit;font-size:12.5px;cursor:pointer;
@@ -378,6 +412,34 @@
     50%{ transform:translateY(-9px); opacity:1; }
   }
   .sources{margin-top:8px;font-size:11.5px;color:var(--text-faint);}
+  .msg-actions{
+    align-self:flex-start; display:flex; gap:4px; margin-top:-8px; margin-bottom:2px;
+    animation: msgActionsIn 0.2s ease;
+  }
+  .msg-actions.msg-actions-right{ align-self:flex-end; }
+  @keyframes msgActionsIn{ from{ opacity:0; } to{ opacity:1; } }
+  .msg-action-btn{
+    background:none; border:none; color:var(--text-faint); cursor:pointer;
+    padding:5px; border-radius:6px; display:flex; align-items:center; justify-content:center;
+    transition:background .15s ease, color .15s ease;
+  }
+  .msg-action-btn:hover{ background:var(--bg-input); color:var(--brass); }
+  .msg-action-btn.copied{ color:var(--brass); }
+  .msg-edit-form{
+    align-self:flex-end; max-width:78%; width:100%; display:flex; flex-direction:column; gap:8px;
+  }
+  .msg-edit-form textarea{
+    width:100%; resize:vertical; min-height:44px; max-height:220px;
+    background:var(--bg-input); border:1px solid var(--brass-dim); border-radius:12px;
+    padding:11px 15px; color:var(--text); font-family:inherit; font-size:14.5px;
+  }
+  .msg-edit-form textarea:focus{ outline:none; box-shadow:0 0 0 3px rgba(201,162,39,0.12); }
+  .msg-edit-actions{ display:flex; gap:8px; justify-content:flex-end; }
+  .msg-edit-actions button{
+    padding:6px 14px; border-radius:8px; font-family:inherit; font-size:12.5px; cursor:pointer;
+  }
+  .msg-edit-save{ background:var(--brass); color:#1a1408; border:none; font-weight:600; }
+  .msg-edit-cancel{ background:none; border:1px solid var(--line); color:var(--text-dim); }
   .sources a{color:var(--text-dim);}
   .composer{
     padding:16px 10%;border-top:1px solid var(--line);
@@ -581,6 +643,7 @@
 
   @media (max-width: 768px){
     .menu-btn{ display:flex; align-items:center; justify-content:center; }
+    .session-item-actions{ opacity:1; }
 
     .sidebar{
       position:fixed; top:0; left:0; bottom:0; z-index:50;
@@ -656,6 +719,10 @@
     <div class="name display">SamuelAI</div>
   </div>
   <button class="new-chat-btn" onclick="newChat(); closeSidebar();">+ New chat</button>
+  <div class="session-search">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input type="text" id="session-search-input" placeholder="Search chats…" oninput="renderSessions()">
+  </div>
   <div class="session-list" id="session-list"></div>
   <div class="sidebar-footer">
     <button class="settings-btn" onclick="openSettings()">⚙ Settings</button>
@@ -675,6 +742,7 @@
     <div class="knowledge-note" title="SamuelAI automatically checks the live web for questions about current events, scores, news, and similar.">
       Live web check: on for current-events questions
     </div>
+    <div class="quota-note" id="quota-note" style="display:none;" title="Free daily message limit, shared to keep the site free for everyone."></div>
     <button class="account-btn" id="account-btn" onclick="openSettings('account')">
       <span id="account-btn-label">Log in</span>
     </button>
@@ -691,8 +759,9 @@
         <div id="attachment-preview" class="attachment-preview"></div>
         <textarea id="chat-input" placeholder="Ask anything…" rows="1"></textarea>
       </div>
-      <button class="send-btn" id="send-btn" onclick="sendChat()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12L20 4L13 20L11 13L4 12Z" fill="#1a1408"/></svg>
+      <button class="send-btn" id="send-btn" onclick="handleSendBtnClick()">
+        <svg id="send-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12L20 4L13 20L11 13L4 12Z" fill="#1a1408"/></svg>
+        <svg id="stop-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" style="display:none;"><rect x="5" y="5" width="14" height="14" rx="2" fill="#1a1408"/></svg>
       </button>
     </div>
   </div>
@@ -932,14 +1001,94 @@ function closeSidebar(){
 }
 function renderSessions(){
   const list = document.getElementById('session-list');
+  const searchInput = document.getElementById('session-search-input');
+  const query = (searchInput?.value || '').trim().toLowerCase();
+
   list.innerHTML = "";
-  state.sessions.forEach(s => {
+
+  const filtered = !query ? state.sessions : state.sessions.filter(s => {
+    if(s.title.toLowerCase().includes(query)) return true;
+    return (s.messages || []).some(m => (m.text || '').toLowerCase().includes(query));
+  });
+
+  if(query && filtered.length === 0){
+    const empty = document.createElement('div');
+    empty.className = 'session-empty';
+    empty.textContent = 'No chats match your search.';
+    list.appendChild(empty);
+    return;
+  }
+
+  filtered.forEach(s => {
     const el = document.createElement('div');
     el.className = 'session-item' + (s.id === state.activeSessionId ? ' active' : '');
-    el.textContent = s.title;
-    el.onclick = () => switchSession(s.id);
+    el.dataset.sessionId = s.id;
+
+    const titleSpan = document.createElement('span');
+    titleSpan.className = 'session-title';
+    titleSpan.textContent = s.title;
+    titleSpan.onclick = () => switchSession(s.id);
+    el.appendChild(titleSpan);
+
+    const actions = document.createElement('span');
+    actions.className = 'session-item-actions';
+    actions.innerHTML = `
+      <button class="session-icon-btn" title="Rename" onclick="event.stopPropagation(); startRenameSession('${s.id}')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      </button>
+      <button class="session-icon-btn" title="Delete" onclick="event.stopPropagation(); deleteSession('${s.id}')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      </button>
+    `;
+    el.appendChild(actions);
+
     list.appendChild(el);
   });
+}
+
+function startRenameSession(sessionId){
+  const session = state.sessions.find(s => s.id === sessionId);
+  if(!session) return;
+  const targetEl = document.querySelector(`.session-item[data-session-id="${sessionId}"]`);
+  if(!targetEl) return;
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'session-rename-input';
+  input.value = session.title;
+  targetEl.innerHTML = '';
+  targetEl.appendChild(input);
+  input.focus();
+  input.select();
+
+  const commit = () => {
+    const newTitle = input.value.trim();
+    if(newTitle) session.title = newTitle;
+    renderSessions();
+    if(currentUser) setDoc(doc(db, 'users', currentUser.uid, 'sessions', sessionId), { title: session.title }, { merge: true }).catch(() => {});
+  };
+  input.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){ e.preventDefault(); commit(); }
+    if(e.key === 'Escape'){ renderSessions(); }
+  });
+  input.addEventListener('blur', commit);
+}
+
+function deleteSession(sessionId){
+  if(!confirm('Delete this chat? This cannot be undone.')) return;
+  const wasActive = sessionId === state.activeSessionId;
+  state.sessions = state.sessions.filter(s => s.id !== sessionId);
+  if(currentUser) deleteDoc(doc(db, 'users', currentUser.uid, 'sessions', sessionId)).catch(() => {});
+  if(wasActive){
+    if(state.sessions.length){
+      state.activeSessionId = state.sessions[0].id;
+      renderChatLog();
+    } else {
+      newChat();
+      return;
+    }
+  }
+  renderSessions();
 }
 
 /* ---------------------------------------------------------
@@ -1200,6 +1349,7 @@ function renderChatLog(animateLastIndex){
   session.messages.forEach((m, i) => {
     const div = document.createElement('div');
     div.className = 'msg ' + m.role + (m.error ? ' error' : '') + (i === animateLastIndex ? ' msg-enter' : '');
+    div.dataset.msgIndex = i;
     const attHtml = attachmentsToHtml(m.attachments);
     if(m.role === 'ai' && !m.error){
       div.innerHTML = attHtml + markdownToHtml(m.text);
@@ -1213,6 +1363,37 @@ function renderChatLog(animateLastIndex){
       div.appendChild(src);
     }
     log.appendChild(div);
+
+    // Action toolbar under AI messages: Copy always, Regenerate only on
+    // the most recent AI reply (and only once it's finished, not mid-stream).
+    if(m.role === 'ai' && m.text && !isStreaming){
+      const isLastMessage = i === session.messages.length - 1;
+      const toolbar = document.createElement('div');
+      toolbar.className = 'msg-actions';
+      toolbar.innerHTML = `
+        <button class="msg-action-btn" onclick="copyMessageText(${i}, this)" title="Copy">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+        </button>
+        ${isLastMessage ? `
+        <button class="msg-action-btn" onclick="regenerateResponse()" title="Regenerate">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </button>` : ''}
+      `;
+      log.appendChild(toolbar);
+    }
+
+    // Edit control on user messages (only when not currently streaming,
+    // so editing can't collide with an in-flight response).
+    if(m.role === 'user' && !isStreaming){
+      const toolbar = document.createElement('div');
+      toolbar.className = 'msg-actions msg-actions-right';
+      toolbar.innerHTML = `
+        <button class="msg-action-btn" onclick="startEditMessage(${i})" title="Edit">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+      `;
+      log.appendChild(toolbar);
+    }
   });
   log.scrollTop = log.scrollHeight;
 }
@@ -1279,8 +1460,21 @@ function setTheme(name){
 }
 
 /* ---------------------------------------------------------
-   CHAT — calls Gemini generateContent
+   CHAT — calls Gemini (streaming), with stop/regenerate/copy
 --------------------------------------------------------- */
+let isStreaming = false;
+let activeAbortController = null;
+
+function updateQuotaIndicator(remaining, limit){
+  const el = document.getElementById('quota-note');
+  if(remaining === null || remaining === undefined) return;
+  const remainingNum = parseInt(remaining, 10);
+  if(isNaN(remainingNum)) return;
+  el.style.display = 'block';
+  el.textContent = `${remainingNum} free message${remainingNum === 1 ? '' : 's'} left today`;
+  el.classList.toggle('low', remainingNum <= 5);
+}
+
 function useExamplePrompt(btn){
   const input = document.getElementById('chat-input');
   input.value = btn.textContent;
@@ -1288,7 +1482,31 @@ function useExamplePrompt(btn){
   input.focus();
 }
 
-async function sendChat(){
+function setSendButtonState(streaming){
+  const sendIcon = document.getElementById('send-icon');
+  const stopIcon = document.getElementById('stop-icon');
+  const sendBtn = document.getElementById('send-btn');
+  sendIcon.style.display = streaming ? 'none' : 'block';
+  stopIcon.style.display = streaming ? 'block' : 'none';
+  sendBtn.title = streaming ? 'Stop generating' : 'Send';
+  sendBtn.disabled = false; // stays clickable so it can act as Stop
+}
+
+function handleSendBtnClick(){
+  if(isStreaming){
+    stopGenerating();
+  } else {
+    sendChat();
+  }
+}
+
+function stopGenerating(){
+  if(activeAbortController){
+    activeAbortController.abort();
+  }
+}
+
+function sendChat(){
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
   if(!text && pendingAttachments.length === 0) return;
@@ -1306,10 +1524,76 @@ async function sendChat(){
   pendingAttachments = [];
   renderAttachmentPreview();
   renderSessions();
+
+  runAssistantTurn();
+}
+
+function regenerateResponse(){
+  if(isStreaming) return;
+  const session = getActiveSession();
+  if(!session || !session.messages.length) return;
+  const last = session.messages[session.messages.length - 1];
+  if(last.role === 'ai'){
+    session.messages.pop(); // drop the old answer, we're replacing it
+  }
+  runAssistantTurn();
+}
+
+function startEditMessage(index){
+  if(isStreaming) return;
+  const session = getActiveSession();
+  const msg = session?.messages?.[index];
+  if(!msg) return;
+
+  const log = document.getElementById('chat-log');
+  const targetDiv = log.querySelector(`[data-msg-index="${index}"]`);
+  if(!targetDiv) return;
+
+  // Remove that message's own action toolbar while editing (sits right after it in the DOM)
+  const toolbar = targetDiv.nextElementSibling;
+  if(toolbar && toolbar.classList.contains('msg-actions')) toolbar.remove();
+
+  const form = document.createElement('div');
+  form.className = 'msg-edit-form';
+  form.innerHTML = `
+    <textarea id="edit-textarea-${index}">${escapeHtml(msg.text)}</textarea>
+    <div class="msg-edit-actions">
+      <button class="msg-edit-cancel" onclick="cancelEditMessage()">Cancel</button>
+      <button class="msg-edit-save" onclick="saveEditedMessage(${index})">Save &amp; submit</button>
+    </div>
+  `;
+  targetDiv.replaceWith(form);
+  const ta = document.getElementById(`edit-textarea-${index}`);
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+  ta.style.height = Math.min(ta.scrollHeight, 220) + 'px';
+}
+
+function cancelEditMessage(){
+  renderChatLog();
+}
+
+function saveEditedMessage(index){
+  const ta = document.getElementById(`edit-textarea-${index}`);
+  const newText = ta.value.trim();
+  if(!newText) return;
+
+  const session = getActiveSession();
+  const original = session.messages[index];
+  // Drop this message and everything after it — editing a question means
+  // we're branching from this point, same as ChatGPT/Claude's edit behavior.
+  session.messages = session.messages.slice(0, index);
+  session.messages.push({ role:'user', text:newText, attachments: original.attachments || [] });
+  renderSessions();
+  runAssistantTurn();
+}
+
+async function runAssistantTurn(){
+  const session = getActiveSession();
   renderChatLog();
 
-  const sendBtn = document.getElementById('send-btn');
-  sendBtn.disabled = true;
+  isStreaming = true;
+  setSendButtonState(true);
   showTypingIndicator();
 
   // Build conversation history for the API, including any attached files as inline data
@@ -1333,12 +1617,17 @@ async function sendChat(){
   const log = document.getElementById('chat-log');
   let bubbleEl = null;
 
+  activeAbortController = new AbortController();
+
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
+      signal: activeAbortController.signal
     });
+
+    updateQuotaIndicator(res.headers.get('X-RateLimit-Remaining'), res.headers.get('X-RateLimit-Limit'));
 
     if(!res.ok){
       let errData = {};
@@ -1371,25 +1660,47 @@ async function sendChat(){
 
     if(!aiMessage.text){
       aiMessage.text = "(No response returned. Try rephrasing or asking again.)";
-      renderChatLog(session.messages.length - 1);
     }
   } catch(err){
     hideTypingIndicator();
-    if(aiMessage.text && bubbleEl){
+    if(err.name === 'AbortError'){
+      // User hit Stop — keep whatever text streamed in so far, no error styling
+      if(!aiMessage.text){
+        aiMessage.text = "(Stopped.)";
+      }
+    } else if(aiMessage.text && bubbleEl){
       // Some text streamed before the connection dropped — keep it and
       // append a note, rather than throwing the partial answer away.
       aiMessage.text += `\n\n(Connection interrupted: ${err.message})`;
-      bubbleEl.innerHTML = markdownToHtml(aiMessage.text);
     } else {
       aiMessage.text = 'Something went wrong: ' + err.message;
       aiMessage.error = true;
-      renderChatLog(session.messages.length - 1);
     }
   } finally {
     hideTypingIndicator();
-    sendBtn.disabled = false;
+    isStreaming = false;
+    activeAbortController = null;
+    setSendButtonState(false);
+    renderChatLog(session.messages.length - 1);
     saveActiveSessionToFirestore();
   }
+}
+
+function copyMessageText(index, btn){
+  const session = getActiveSession();
+  const msg = session?.messages?.[index];
+  if(!msg) return;
+  navigator.clipboard.writeText(msg.text).then(() => {
+    const original = btn.innerHTML;
+    btn.classList.add('copied');
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>`;
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = original;
+    }, 1500);
+  }).catch(() => {
+    alert('Could not copy — your browser may be blocking clipboard access.');
+  });
 }
 
 document.getElementById('chat-input').addEventListener('keydown', (e) => {
@@ -1466,6 +1777,8 @@ newChat();
 // so anything referenced by an inline onclick="..." in the HTML
 // needs to be attached to window explicitly here.
 window.newChat = newChat;
+window.startRenameSession = startRenameSession;
+window.deleteSession = deleteSession;
 window.closeSidebar = closeSidebar;
 window.toggleSidebar = toggleSidebar;
 window.openSettings = openSettings;
@@ -1474,6 +1787,12 @@ window.showSettingsTab = showSettingsTab;
 window.setMode = setMode;
 window.handleFileSelect = handleFileSelect;
 window.sendChat = sendChat;
+window.handleSendBtnClick = handleSendBtnClick;
+window.regenerateResponse = regenerateResponse;
+window.startEditMessage = startEditMessage;
+window.cancelEditMessage = cancelEditMessage;
+window.saveEditedMessage = saveEditedMessage;
+window.copyMessageText = copyMessageText;
 window.useExamplePrompt = useExamplePrompt;
 window.generateImage = generateImage;
 window.setTheme = setTheme;
