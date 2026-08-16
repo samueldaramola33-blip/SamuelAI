@@ -14,11 +14,13 @@ function checkAndConsume(ip) {
   const entry = usage.get(ip);
   if (!entry || entry.day !== today) {
     usage.set(ip, { count: 1, day: today });
-    return true;
+    return { allowed: true, remaining: DAILY_LIMIT - 1 };
   }
-  if (entry.count >= DAILY_LIMIT) return false;
+  if (entry.count >= DAILY_LIMIT) {
+    return { allowed: false, remaining: 0 };
+  }
   entry.count += 1;
-  return true;
+  return { allowed: true, remaining: DAILY_LIMIT - entry.count };
 }
 
 export default async function handler(req, res) {
@@ -27,7 +29,10 @@ export default async function handler(req, res) {
   }
 
   const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
-  if (!checkAndConsume(ip)) {
+  const usageCheck = checkAndConsume(ip);
+  res.setHeader('X-RateLimit-Remaining', String(usageCheck.remaining));
+  res.setHeader('X-RateLimit-Limit', String(DAILY_LIMIT));
+  if (!usageCheck.allowed) {
     return res.status(429).json({ error: `Daily limit reached (${DAILY_LIMIT} messages). Please try again tomorrow.` });
   }
 
@@ -46,10 +51,16 @@ export default async function handler(req, res) {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
 
-  // Pull the latest user message text, used both to decide whether to
-  // search and as the actual search query.
-  const lastUserMsg = [...contents].reverse().find(c => c.role === 'user');
-  const lastUserText = lastUserMsg?.parts?.find(p => p.text)?.text || '';
+  // Pull the last few user messages — used to decide whether to search
+  // (a short follow-up like "how many votes?" has no trigger words of its
+  // own, but is clearly still about the same topic) and to build a search
+  // query that actually carries context instead of just the latest message.
+  const recentUserTexts = contents
+    .filter(c => c.role === 'user')
+    .map(c => c.parts?.find(p => p.text)?.text || '')
+    .filter(Boolean)
+    .slice(-3); // last up to 3 user turns
+  const lastUserText = recentUserTexts[recentUserTexts.length - 1] || '';
 
   // ---------------------------------------------------------------------
   // LIVE WEB SEARCH via Tavily (free, no billing required — unlike Gemini's
@@ -59,21 +70,29 @@ export default async function handler(req, res) {
   // free 1,000/month allowance last.
   // ---------------------------------------------------------------------
   const TIME_SENSITIVE_PATTERN =
-    /\b(today|tonight|tomorrow|yesterday|last night|this week|this month|this year|currently|right now|latest|recent|breaking|news|score|scores|won|winner|result|results|standings|schedule|price|prices|stock|weather|election|update|updates|who is (the )?(current|president|prime minister|ceo)|what('s| is) happening|2026)\b/i;
+    /\b(today|tonight|tomorrow|yesterday|last night|this week|this month|this year|currently|right now|latest|recent|breaking|news|score|scores|won|win|winner|result|results|vote|votes|standings|schedule|price|prices|stock|weather|election|update|updates|how many|who is (the )?(current|president|prime minister|ceo)|what('s| is) happening|2026)\b/i;
 
   let searchContext = '';
   let searchAttempted = false;
   const tavilyKey = process.env.TAVILY_API_KEY;
 
-  if (tavilyKey && lastUserText && TIME_SENSITIVE_PATTERN.test(lastUserText)) {
+  // Search if the LATEST message matches directly, OR if an earlier recent
+  // message matched (meaning we're likely still in a follow-up about that
+  // same time-sensitive topic).
+  const shouldSearch = tavilyKey && recentUserTexts.some(t => TIME_SENSITIVE_PATTERN.test(t));
+
+  if (shouldSearch) {
     searchAttempted = true;
+    // Combine recent turns into one query so short follow-ups ("how many
+    // votes?") keep the context of what was actually being asked about.
+    const contextualQuery = recentUserTexts.join(' — ');
     try {
       const tavilyRes = await fetch('https://api.tavily.com/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           api_key: tavilyKey,
-          query: lastUserText,
+          query: contextualQuery,
           search_depth: 'basic',
           max_results: 5,
           include_answer: false
