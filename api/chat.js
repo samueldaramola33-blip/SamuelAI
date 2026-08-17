@@ -41,7 +41,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server is missing GEMINI_API_KEY.' });
   }
 
-  const { contents } = req.body || {};
+  const { contents, customInstructions } = req.body || {};
   if (!Array.isArray(contents)) {
     return res.status(400).json({ error: 'Missing conversation contents.' });
   }
@@ -93,8 +93,8 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           api_key: tavilyKey,
           query: contextualQuery,
-          search_depth: 'basic',
-          max_results: 5,
+          search_depth: 'advanced',
+          max_results: 7,
           include_answer: false
         })
       });
@@ -115,9 +115,9 @@ export default async function handler(req, res) {
   }
 
   const systemText =
-    "You are SamuelAI, a helpful AI assistant built by Samuel Daramola. " +
+    "You are Loupe, a helpful AI assistant built by Samuel Daramola. " +
     "If asked who made you, who owns this website, or what you are, answer that you are " +
-    "SamuelAI, created by Samuel Daramola, built using Google's Gemini technology. " +
+    "Loupe, created by Samuel Daramola, built using Google's Gemini technology. " +
     "Do not refer to yourself as Gemini, Google, or Bard. Be friendly, clear, and helpful. " +
     `Today's real date is ${today}. Your training data has a cutoff before today, so treat your own ` +
     "built-in knowledge of recent events, scores, schedules, or 'current' anything as possibly outdated." +
@@ -130,7 +130,12 @@ export default async function handler(req, res) {
         ? " A live web search was attempted for this question but returned nothing useful, so answer from " +
           "your own knowledge and clearly say you couldn't verify it live."
         : " You do NOT have live internet access for this question — answer from your own knowledge, and if " +
-          "the question depends on very recent or real-time information, say so plainly rather than guessing.");
+          "the question depends on very recent or real-time information, say so plainly rather than guessing.") +
+    (customInstructions && typeof customInstructions === 'string' && customInstructions.trim()
+      ? "\n\nThe user has set these personal preferences for how you respond — follow them for every reply " +
+        "in this conversation, as long as they don't conflict with being safe, honest, and helpful:\n" +
+        customInstructions.trim().slice(0, 800) // safety cap so this can't be used to smuggle in a huge prompt
+      : "");
 
   const body = {
     systemInstruction: { parts: [{ text: systemText }] },
