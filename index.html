@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SamuelAI — Ask anything. See anything.</title>
-<meta name="description" content="SamuelAI is a free AI assistant — chat, get live current-events answers, and generate images. No sign-up required to start.">
+<title>Loupe — Ask anything. See anything.</title>
+<meta name="description" content="Loupe is a free AI assistant — chat, get live current-events answers, and generate images. No sign-up required to start.">
 <meta name="theme-color" content="#0B1614">
 
 <!-- Favicons (place these files next to index.html on your server — see BRAND_ASSETS.md) -->
@@ -13,13 +13,20 @@
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/icon-180.png">
 
+<!-- PWA — lets people "Add to Home Screen" on phones and desktops -->
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Loupe">
+<meta name="mobile-web-app-capable" content="yes">
+
 <!-- Social share preview (WhatsApp, Twitter/X, LinkedIn, Facebook, etc.) -->
 <meta property="og:type" content="website">
-<meta property="og:title" content="SamuelAI — Ask anything. See anything.">
+<meta property="og:title" content="Loupe — Ask anything. See anything.">
 <meta property="og:description" content="A free AI assistant — chat, live current-events answers, and text-to-image generation. No sign-up required to start.">
 <meta property="og:image" content="/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="SamuelAI — Ask anything. See anything.">
+<meta name="twitter:title" content="Loupe — Ask anything. See anything.">
 <meta name="twitter:description" content="A free AI assistant — chat, live current-events answers, and text-to-image generation.">
 <meta name="twitter:image" content="/og-image.png">
 
@@ -184,7 +191,7 @@
     letter-spacing:-0.01em;
   }
 
-  /* ---------- SamuelAI mark (signature element) ---------- */
+  /* ---------- Loupe mark (signature element) ---------- */
   .aperture{
     width:22px;height:22px;position:relative;flex-shrink:0;
   }
@@ -425,6 +432,7 @@
   }
   .msg-action-btn:hover{ background:var(--bg-input); color:var(--brass); }
   .msg-action-btn.copied{ color:var(--brass); }
+  .feedback-btn.active{ color:var(--brass); }
   .msg-edit-form{
     align-self:flex-end; max-width:78%; width:100%; display:flex; flex-direction:column; gap:8px;
   }
@@ -568,14 +576,18 @@
     margin-bottom:16px;font-size:13.5px;
   }
   .modal-actions{display:flex;justify-content:flex-end;gap:10px;}
-  .modal-actions button{
-    padding:9px 16px;border-radius:8px;border:none;font-family:inherit;
-    font-size:13px;cursor:pointer;
+  .btn-primary, .btn-secondary{
+    padding:11px 18px;border-radius:9px;font-family:inherit;
+    font-size:13.5px;cursor:pointer;border:none;
+    transition:transform .12s ease, box-shadow .2s ease, background .15s ease, border-color .15s ease;
   }
   .btn-secondary{background:transparent;border:1px solid var(--line) !important;color:var(--text-dim);}
+  .btn-secondary:hover{border-color:var(--brass-dim) !important;color:var(--text);}
   .btn-primary{background:var(--brass);color:#1a1408;font-weight:600;}
+  .btn-primary:hover{box-shadow:0 0 0 4px rgba(201,162,39,0.15); transform:translateY(-1px);}
+  .btn-primary:active, .btn-secondary:active{transform:translateY(0) scale(0.98);}
   .modal a{color:var(--brass);}
-  .modal .btn-primary:disabled{opacity:0.5;cursor:not-allowed;}
+  .modal .btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none;box-shadow:none;}
 
   .settings-tabs{display:flex;gap:4px;margin-bottom:18px;border-bottom:1px solid var(--line);}
   .settings-tabs button{
@@ -593,6 +605,12 @@
     text-align:center;font-size:11.5px;color:var(--text-dim);transition:border-color .15s ease;
   }
   .theme-swatch.selected{border-color:var(--brass);color:var(--text);}
+  .instructions-textarea{
+    width:100%; background:var(--bg-input); border:1px solid var(--line); border-radius:10px;
+    padding:12px 14px; color:var(--text); font-family:inherit; font-size:13.5px; resize:vertical;
+    min-height:90px;
+  }
+  .instructions-textarea:focus{ outline:none; border-color:var(--brass-dim); box-shadow:0 0 0 3px rgba(201,162,39,0.12); }
   .theme-swatch .swatch-preview{
     height:36px;border-radius:6px;margin-bottom:8px;display:flex;overflow:hidden;
   }
@@ -716,7 +734,7 @@
 <div class="sidebar" id="sidebar">
   <div class="brand">
     <div class="aperture"><svg viewBox="0 0 200 200"><use href="#logo-mark"/></svg></div>
-    <div class="name display">SamuelAI</div>
+    <div class="name display">Loupe</div>
   </div>
   <button class="new-chat-btn" onclick="newChat(); closeSidebar();">+ New chat</button>
   <div class="session-search">
@@ -739,7 +757,7 @@
       <button id="tab-chat" class="active" onclick="setMode('chat')">Chat</button>
       <button id="tab-imagine" onclick="setMode('imagine')">Imagine</button>
     </div>
-    <div class="knowledge-note" title="SamuelAI automatically checks the live web for questions about current events, scores, news, and similar.">
+    <div class="knowledge-note" title="Loupe automatically checks the live web for questions about current events, scores, news, and similar.">
       Live web check: on for current-events questions
     </div>
     <div class="quota-note" id="quota-note" style="display:none;" title="Free daily message limit, shared to keep the site free for everyone."></div>
@@ -769,7 +787,7 @@
   <div class="panel" id="imagine-panel">
     <div class="imagine-intro">
       <h2 class="display">Turn words into images</h2>
-      <p>Describe a scene, style, or idea — SamuelAI will render it.</p>
+      <p>Describe a scene, style, or idea — Loupe will render it.</p>
     </div>
     <div class="imagine-form">
       <textarea id="imagine-input" placeholder="e.g. a lighthouse at dawn, watercolor style" rows="1"></textarea>
@@ -790,6 +808,7 @@
     <div class="settings-tabs">
       <button id="tab-settings-account" class="active" onclick="showSettingsTab('account')">Account</button>
       <button id="tab-settings-appearance" onclick="showSettingsTab('appearance')">Appearance</button>
+      <button id="tab-settings-instructions" onclick="showSettingsTab('instructions')">Instructions</button>
       <button id="tab-settings-about" onclick="showSettingsTab('about')">About</button>
     </div>
 
@@ -830,7 +849,7 @@
 
     <!-- APPEARANCE -->
     <div class="settings-section" id="section-appearance">
-      <p class="hint">Choose how SamuelAI looks.</p>
+      <p class="hint">Choose how Loupe looks.</p>
       <div class="theme-options">
         <div class="theme-swatch selected" id="swatch-current" onclick="setTheme('current')">
           <div class="swatch-preview"><span style="background:#0B1614"></span><span style="background:#C9A227"></span></div>
@@ -848,14 +867,33 @@
       <p class="hint" style="margin-top:14px;">Signed-in users have their theme remembered automatically. Guests keep their pick only for this visit.</p>
     </div>
 
+    <!-- CUSTOM INSTRUCTIONS -->
+    <div class="settings-section" id="section-instructions">
+      <p class="hint">
+        Tell Loupe how you'd like it to respond — this applies to every new message.
+        For example: <em>"Always reply in Nigerian Pidgin"</em>, <em>"Keep answers short and direct"</em>,
+        or <em>"I'm a beginner developer, explain things simply."</em>
+      </p>
+      <textarea id="custom-instructions-input" class="instructions-textarea" rows="5" placeholder="e.g. Always reply in Pidgin. Keep answers under 3 sentences unless I ask for more detail."></textarea>
+      <div class="modal-actions" style="margin-top:12px;">
+        <button class="btn-secondary" onclick="clearCustomInstructions()">Clear</button>
+        <button class="btn-primary" onclick="saveCustomInstructions()">Save</button>
+      </div>
+      <p class="hint" style="margin-top:14px;" id="instructions-save-note"></p>
+    </div>
+
     <!-- ABOUT -->
     <div class="settings-section" id="section-about">
       <p class="hint">
-        SamuelAI is free to use — chat and image generation run through a shared backend,
+        Loupe is free to use — chat and image generation run through a shared backend,
         so you can start chatting or generating images right away with no sign-up required.
         Creating a free account is optional — it just lets you save your chat history and
         pick it back up on any device. To keep things fair for everyone, usage is capped per
         visitor per day. If you hit a limit, just come back tomorrow.
+      </p>
+      <p class="hint" style="margin-top:14px;">
+        <a href="/privacy.html" target="_blank">Privacy Policy</a> &nbsp;·&nbsp;
+        <a href="/terms.html" target="_blank">Terms of Service</a>
       </p>
       <div class="modal-actions">
         <button class="btn-primary" onclick="closeSettings()">Got it</button>
@@ -877,16 +915,16 @@ import {
   GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut, deleteUser
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import {
-  getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs, query, orderBy, writeBatch
+  getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs, query, orderBy, writeBatch, addDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDLNNUs7p60LrvfK22TjBsQnfxLC2HUwAs",
+  authDomain: "samuelai-b6232.firebaseapp.com",
+  projectId: "samuelai-b6232",
+  storageBucket: "samuelai-b6232.firebasestorage.app",
+  messagingSenderId: "208150875780",
+  appId: "1:208150875780:web:8f5febab8411ff4749bcd1"
 };
 const firebaseApp = initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
@@ -907,7 +945,8 @@ let state = {
   sessions: [],       // [{id, title, messages:[{role,text,sources}]}]
   activeSessionId: null,
   mode: "chat",
-  theme: "current"
+  theme: "current",
+  customInstructions: ""
 };
 
 function uid(){ return Math.random().toString(36).slice(2,10); }
@@ -1189,12 +1228,14 @@ function resetToGuestState(){
 }
 
 async function loadUserData(user){
-  // Theme preference
+  // Theme preference + custom instructions (both live on the same user doc)
   try{
     const prefSnap = await getDoc(doc(db, 'users', user.uid));
-    const theme = prefSnap.exists() && prefSnap.data().theme ? prefSnap.data().theme : 'current';
-    applyTheme(theme, false);
-  } catch(e){ console.error('Could not load theme', e); }
+    const data = prefSnap.exists() ? prefSnap.data() : {};
+    applyTheme(data.theme || 'current', false);
+    state.customInstructions = data.customInstructions || '';
+    document.getElementById('custom-instructions-input').value = state.customInstructions;
+  } catch(e){ console.error('Could not load preferences', e); }
 
   // Saved chat sessions
   try{
@@ -1364,8 +1405,8 @@ function renderChatLog(animateLastIndex){
     }
     log.appendChild(div);
 
-    // Action toolbar under AI messages: Copy always, Regenerate only on
-    // the most recent AI reply (and only once it's finished, not mid-stream).
+    // Action toolbar under AI messages: Copy, feedback thumbs always;
+    // Regenerate only on the most recent reply (and only once finished).
     if(m.role === 'ai' && m.text && !isStreaming){
       const isLastMessage = i === session.messages.length - 1;
       const toolbar = document.createElement('div');
@@ -1373,6 +1414,12 @@ function renderChatLog(animateLastIndex){
       toolbar.innerHTML = `
         <button class="msg-action-btn" onclick="copyMessageText(${i}, this)" title="Copy">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+        </button>
+        <button class="msg-action-btn feedback-btn ${m.feedback === 'up' ? 'active' : ''}" onclick="submitFeedback(${i}, 'up', this)" title="Good response">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="${m.feedback === 'up' ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+        </button>
+        <button class="msg-action-btn feedback-btn ${m.feedback === 'down' ? 'active' : ''}" onclick="submitFeedback(${i}, 'down', this)" title="Not helpful">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="${m.feedback === 'down' ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/></svg>
         </button>
         ${isLastMessage ? `
         <button class="msg-action-btn" onclick="regenerateResponse()" title="Regenerate">
@@ -1434,7 +1481,7 @@ function closeSettings(){
   document.getElementById('settings-modal').classList.remove('open');
 }
 function showSettingsTab(tab){
-  ['account','appearance','about'].forEach(t => {
+  ['account','appearance','instructions','about'].forEach(t => {
     document.getElementById('tab-settings-' + t).classList.toggle('active', t === tab);
     document.getElementById('section-' + t).classList.toggle('active', t === tab);
   });
@@ -1457,6 +1504,36 @@ function applyTheme(name, save){
 }
 function setTheme(name){
   applyTheme(name, true);
+}
+
+/* ---------------------------------------------------------
+   CUSTOM INSTRUCTIONS
+   Signed-in users: saved to Firestore, applies to every future
+   message. Guests: kept in memory for this visit only, same
+   pattern as everything else that isn't logged in.
+--------------------------------------------------------- */
+function saveCustomInstructions(){
+  const text = document.getElementById('custom-instructions-input').value.trim();
+  state.customInstructions = text;
+  const note = document.getElementById('instructions-save-note');
+  if(currentUser){
+    setDoc(doc(db, 'users', currentUser.uid), { customInstructions: text }, { merge: true })
+      .then(() => { note.textContent = 'Saved — this will apply to your future messages.'; })
+      .catch(() => { note.textContent = "Saved for this session, but couldn't sync to your account."; });
+  } else {
+    note.textContent = "Saved for this visit. Log in to keep this permanently.";
+  }
+  setTimeout(() => { note.textContent = ''; }, 4000);
+}
+
+function clearCustomInstructions(){
+  document.getElementById('custom-instructions-input').value = '';
+  state.customInstructions = '';
+  if(currentUser){
+    setDoc(doc(db, 'users', currentUser.uid), { customInstructions: '' }, { merge: true }).catch(() => {});
+  }
+  document.getElementById('instructions-save-note').textContent = 'Cleared.';
+  setTimeout(() => { document.getElementById('instructions-save-note').textContent = ''; }, 3000);
 }
 
 /* ---------------------------------------------------------
@@ -1608,7 +1685,7 @@ async function runAssistantTurn(){
       return { role: m.role === 'ai' ? 'model' : 'user', parts };
     });
 
-  const body = { contents };
+  const body = { contents, customInstructions: state.customInstructions || '' };
 
   // Placeholder AI message we fill in live as the stream arrives, rather
   // than waiting for the whole answer before showing anything.
@@ -1703,6 +1780,42 @@ function copyMessageText(index, btn){
   });
 }
 
+function submitFeedback(index, rating, btn){
+  const session = getActiveSession();
+  const msg = session?.messages?.[index];
+  if(!msg) return;
+
+  // Toggle off if clicking the same rating again
+  const newRating = msg.feedback === rating ? null : rating;
+  msg.feedback = newRating;
+
+  // Update both thumbs' visual state immediately (don't wait on the network write)
+  const toolbar = btn.parentElement;
+  toolbar.querySelectorAll('.feedback-btn').forEach(b => {
+    b.classList.remove('active');
+    b.querySelector('svg').setAttribute('fill', 'none');
+  });
+  if(newRating){
+    btn.classList.add('active');
+    btn.querySelector('svg').setAttribute('fill', 'currentColor');
+  }
+
+  if(!newRating) return; // toggled off — nothing to log
+
+  // Best-effort write to Firestore. This is anonymous/aggregate feedback,
+  // not tied to chat history, so it's fine even for guests. If Firebase
+  // isn't set up yet (or the write fails for any reason), we fail silently —
+  // the visual toggle above already gave the person their confirmation.
+  try{
+    addDoc(collection(db, 'feedback'), {
+      rating: newRating,
+      messageText: (msg.text || '').slice(0, 2000),
+      userId: currentUser ? currentUser.uid : 'anonymous',
+      createdAt: serverTimestamp()
+    }).catch((e) => console.error('Feedback not saved:', e.message));
+  } catch(e){ console.error('Feedback not saved:', e.message); }
+}
+
 document.getElementById('chat-input').addEventListener('keydown', (e) => {
   if(e.key === 'Enter' && !e.shiftKey){
     e.preventDefault();
@@ -1773,6 +1886,13 @@ document.getElementById('imagine-input').addEventListener('input', function(){ a
 --------------------------------------------------------- */
 newChat();
 
+// Register service worker for "Add to Home Screen" installability
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => { /* non-critical if this fails */ });
+  });
+}
+
 // Module scripts don't auto-expose top-level functions globally,
 // so anything referenced by an inline onclick="..." in the HTML
 // needs to be attached to window explicitly here.
@@ -1793,9 +1913,12 @@ window.startEditMessage = startEditMessage;
 window.cancelEditMessage = cancelEditMessage;
 window.saveEditedMessage = saveEditedMessage;
 window.copyMessageText = copyMessageText;
+window.submitFeedback = submitFeedback;
 window.useExamplePrompt = useExamplePrompt;
 window.generateImage = generateImage;
 window.setTheme = setTheme;
+window.saveCustomInstructions = saveCustomInstructions;
+window.clearCustomInstructions = clearCustomInstructions;
 window.loginWithGoogle = loginWithGoogle;
 window.loginWithMicrosoft = loginWithMicrosoft;
 window.submitAuthForm = submitAuthForm;
