@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Loupe — Ask anything. See anything.</title>
-<meta name="description" content="Loupe is a free AI assistant — chat, get live current-events answers, and generate images. No sign-up required to start.">
+<title>Xeyra — Ask anything. See anything.</title>
+<meta name="description" content="Xeyra is a free AI assistant — chat, get live current-events answers, and generate images. No sign-up required to start.">
 <meta name="theme-color" content="#0B1614">
 
 <!-- Favicons (place these files next to index.html on your server — see BRAND_ASSETS.md) -->
@@ -17,16 +17,16 @@
 <link rel="manifest" href="/manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Loupe">
+<meta name="apple-mobile-web-app-title" content="Xeyra">
 <meta name="mobile-web-app-capable" content="yes">
 
 <!-- Social share preview (WhatsApp, Twitter/X, LinkedIn, Facebook, etc.) -->
 <meta property="og:type" content="website">
-<meta property="og:title" content="Loupe — Ask anything. See anything.">
+<meta property="og:title" content="Xeyra — Ask anything. See anything.">
 <meta property="og:description" content="A free AI assistant — chat, live current-events answers, and text-to-image generation. No sign-up required to start.">
 <meta property="og:image" content="/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Loupe — Ask anything. See anything.">
+<meta name="twitter:title" content="Xeyra — Ask anything. See anything.">
 <meta name="twitter:description" content="A free AI assistant — chat, live current-events answers, and text-to-image generation.">
 <meta name="twitter:image" content="/og-image.png">
 
@@ -191,7 +191,7 @@
     letter-spacing:-0.01em;
   }
 
-  /* ---------- Loupe mark (signature element) ---------- */
+  /* ---------- Xeyra mark (signature element) ---------- */
   .aperture{
     width:22px;height:22px;position:relative;flex-shrink:0;
   }
@@ -734,7 +734,7 @@
 <div class="sidebar" id="sidebar">
   <div class="brand">
     <div class="aperture"><svg viewBox="0 0 200 200"><use href="#logo-mark"/></svg></div>
-    <div class="name display">Loupe</div>
+    <div class="name display">Xeyra</div>
   </div>
   <button class="new-chat-btn" onclick="newChat(); closeSidebar();">+ New chat</button>
   <div class="session-search">
@@ -757,7 +757,7 @@
       <button id="tab-chat" class="active" onclick="setMode('chat')">Chat</button>
       <button id="tab-imagine" onclick="setMode('imagine')">Imagine</button>
     </div>
-    <div class="knowledge-note" title="Loupe automatically checks the live web for questions about current events, scores, news, and similar.">
+    <div class="knowledge-note" title="Xeyra automatically checks the live web for questions about current events, scores, news, and similar.">
       Live web check: on for current-events questions
     </div>
     <div class="quota-note" id="quota-note" style="display:none;" title="Free daily message limit, shared to keep the site free for everyone."></div>
@@ -787,7 +787,7 @@
   <div class="panel" id="imagine-panel">
     <div class="imagine-intro">
       <h2 class="display">Turn words into images</h2>
-      <p>Describe a scene, style, or idea — Loupe will render it.</p>
+      <p>Describe a scene, style, or idea — Xeyra will render it.</p>
     </div>
     <div class="imagine-form">
       <textarea id="imagine-input" placeholder="e.g. a lighthouse at dawn, watercolor style" rows="1"></textarea>
@@ -849,7 +849,7 @@
 
     <!-- APPEARANCE -->
     <div class="settings-section" id="section-appearance">
-      <p class="hint">Choose how Loupe looks.</p>
+      <p class="hint">Choose how Xeyra looks.</p>
       <div class="theme-options">
         <div class="theme-swatch selected" id="swatch-current" onclick="setTheme('current')">
           <div class="swatch-preview"><span style="background:#0B1614"></span><span style="background:#C9A227"></span></div>
@@ -870,7 +870,7 @@
     <!-- CUSTOM INSTRUCTIONS -->
     <div class="settings-section" id="section-instructions">
       <p class="hint">
-        Tell Loupe how you'd like it to respond — this applies to every new message.
+        Tell Xeyra how you'd like it to respond — this applies to every new message.
         For example: <em>"Always reply in Nigerian Pidgin"</em>, <em>"Keep answers short and direct"</em>,
         or <em>"I'm a beginner developer, explain things simply."</em>
       </p>
@@ -885,11 +885,15 @@
     <!-- ABOUT -->
     <div class="settings-section" id="section-about">
       <p class="hint">
-        Loupe is free to use — chat and image generation run through a shared backend,
+        Xeyra is free to use — chat and image generation run through a shared backend,
         so you can start chatting or generating images right away with no sign-up required.
         Creating a free account is optional — it just lets you save your chat history and
         pick it back up on any device. To keep things fair for everyone, usage is capped per
         visitor per day. If you hit a limit, just come back tomorrow.
+      </p>
+      <p class="hint" style="margin-top:14px;">
+        Built by <a href="https://sammykrafttech.vercel.app" target="_blank">Sammykraft Technologies</a>,
+        founded by Samuel Olanrewaju Daramola.
       </p>
       <p class="hint" style="margin-top:14px;">
         <a href="/privacy.html" target="_blank">Privacy Policy</a> &nbsp;·&nbsp;
