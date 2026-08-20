@@ -66,26 +66,74 @@ export default async function handler(req, res) {
   // LIVE WEB SEARCH via Tavily (free, no billing required — unlike Gemini's
   // own Google Search grounding, which needs a billing-enabled account even
   // for its free monthly allowance). We only spend a search credit when the
-  // question looks like it actually needs current information, to make the
-  // free 1,000/month allowance last.
+  // question actually needs current information, to make the free
+  // 1,000/month allowance last — but instead of relying purely on a keyword
+  // list (which can never cover every phrasing), we use two layers:
+  //
+  //   1. A cheap keyword pre-check — catches obvious cases instantly with
+  //      zero extra latency or API cost.
+  //   2. If that doesn't match, we ask Gemini itself (a tiny, fast, separate
+  //      call) whether the question needs current information. This
+  //      understands MEANING, not just specific words, so it catches
+  //      phrasings no keyword list could ever fully anticipate.
   // ---------------------------------------------------------------------
   const TIME_SENSITIVE_PATTERN =
-    /\b(today|tonight|tomorrow|yesterday|last night|this week|this month|this year|currently|right now|latest|recent|breaking|news|score|scores|won|win|winner|result|results|vote|votes|standings|schedule|price|prices|stock|weather|election|update|updates|how many|who is (the )?(current|president|prime minister|ceo)|what('s| is) happening|2026)\b/i;
+    /\b(today|tonight|tomorrow|yesterday|last night|this week|this month|this year|currently|right now|latest|recent|breaking|news|score|scores|won|win|winner|result|results|vote|votes|standings|schedule|price|prices|stock|weather|election|update|updates|how many|who is|what('s| is) happening|richest|wealthiest|net worth|market cap|market value|valuation|revenue|ranked|ranking|rankings|biggest|largest|most valuable|top \d|population of|number of|how much (is|does)|2026)\b/i;
 
   let searchContext = '';
   let searchAttempted = false;
   const tavilyKey = process.env.TAVILY_API_KEY;
+  const contextualQuery = recentUserTexts.join(' — ');
 
-  // Search if the LATEST message matches directly, OR if an earlier recent
-  // message matched (meaning we're likely still in a follow-up about that
-  // same time-sensitive topic).
-  const shouldSearch = tavilyKey && recentUserTexts.some(t => TIME_SENSITIVE_PATTERN.test(t));
+  async function aiThinksThisNeedsSearch() {
+    try {
+      const classifyRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              role: 'user',
+              parts: [{
+                text: `A user asked this in a chat: "${contextualQuery}"\n\n` +
+                  "Does answering this accurately require current, real-time, or recent real-world information " +
+                  "— such as today's date, live news, scores, prices, rankings, someone's current title, net worth, " +
+                  "status, or anything else that changes over time and could be outdated in an AI's training data? " +
+                  "Answer only the JSON requested, nothing else."
+              }]
+            }],
+            generationConfig: {
+              responseMimeType: 'application/json',
+              responseSchema: {
+                type: 'OBJECT',
+                properties: { needsCurrentInfo: { type: 'BOOLEAN' } },
+                required: ['needsCurrentInfo']
+              },
+              maxOutputTokens: 30
+            }
+          })
+        }
+      );
+      if (!classifyRes.ok) return false; // fail safe — don't block chat over a classifier hiccup
+      const data = await classifyRes.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+      return !!JSON.parse(text).needsCurrentInfo;
+    } catch (e) {
+      console.error('Search-need classification failed:', e.message);
+      return false; // fail safe — worst case we answer without search, never crash the chat
+    }
+  }
+
+  const keywordMatch = recentUserTexts.some(t => TIME_SENSITIVE_PATTERN.test(t));
+  const shouldSearch = tavilyKey && (keywordMatch || await aiThinksThisNeedsSearch());
+
+  let sources = [];
 
   if (shouldSearch) {
     searchAttempted = true;
     // Combine recent turns into one query so short follow-ups ("how many
     // votes?") keep the context of what was actually being asked about.
-    const contextualQuery = recentUserTexts.join(' — ');
     try {
       const tavilyRes = await fetch('https://api.tavily.com/search', {
         method: 'POST',
@@ -105,6 +153,10 @@ export default async function handler(req, res) {
           searchContext = results
             .map((r, i) => `[${i + 1}] ${r.title}\n${r.content}\nSource: ${r.url}`)
             .join('\n\n');
+          // Keep the top few unique sources to show the visitor as clickable
+          // citations, so an answer is verifiable at a glance instead of
+          // just trusted blindly.
+          sources = results.slice(0, 4).map(r => ({ title: r.title, url: r.url }));
         }
       }
       // If Tavily fails or returns nothing, we silently fall through to a
@@ -127,7 +179,10 @@ export default async function handler(req, res) {
     (searchContext
       ? " Below are fresh web search results relevant to the user's question — use them as your source " +
         "of truth for anything current, and answer naturally without dumping raw source text. You may " +
-        "mention where information came from in plain language, but don't fabricate sources beyond what's given.\n\n" +
+        "mention where information came from in plain language, but don't fabricate sources beyond what's given. " +
+        "If the search results conflict with each other, are unclear, or don't fully answer the question, say " +
+        "so honestly instead of confidently picking one version — a caveated but accurate answer is better than " +
+        "a confident but potentially wrong one.\n\n" +
         "SEARCH RESULTS:\n" + searchContext
       : searchAttempted
         ? " A live web search was attempted for this question but returned nothing useful, so answer from " +
@@ -169,7 +224,12 @@ export default async function handler(req, res) {
 
   // From here on we're streaming plain text chunks straight to the browser —
   // this response is no longer JSON, it's just the raw answer text arriving
-  // piece by piece as Gemini generates it.
+  // piece by piece as Gemini generates it. Source citations (if any) ride
+  // along as a header, since headers arrive before the stream starts and
+  // are easy for the frontend to read separately from the message text.
+  if (sources.length) {
+    res.setHeader('X-Sources', Buffer.from(JSON.stringify(sources)).toString('base64'));
+  }
   res.writeHead(200, {
     'Content-Type': 'text/plain; charset=utf-8',
     'Cache-Control': 'no-cache, no-transform',
