@@ -1404,7 +1404,12 @@ function renderChatLog(animateLastIndex){
     if(m.sources && m.sources.length){
       const src = document.createElement('div');
       src.className = 'sources';
-      src.innerHTML = 'Sources: ' + m.sources.map(u => `<a href="${u}" target="_blank">${new URL(u).hostname}</a>`).join(', ');
+      const links = m.sources.map(s => {
+        let hostname = '';
+        try{ hostname = new URL(s.url).hostname.replace(/^www\./, ''); } catch(e){ hostname = s.url; }
+        return `<a href="${s.url}" target="_blank" rel="noopener" title="${escapeHtml(s.title || '')}">${escapeHtml(hostname)}</a>`;
+      }).join(', ');
+      src.innerHTML = 'Sources: ' + links;
       div.appendChild(src);
     }
     log.appendChild(div);
@@ -1714,6 +1719,15 @@ async function runAssistantTurn(){
       let errData = {};
       try { errData = await res.json(); } catch(e){ /* ignore */ }
       throw new Error((typeof errData?.error === 'string' ? errData.error : errData?.error?.message) || `Request failed (${res.status})`);
+    }
+
+    // Source citations (if this answer used live search) ride in a header,
+    // arriving before the streamed text — decode them now so they're
+    // attached and ready to render once the answer finishes.
+    const sourcesHeader = res.headers.get('X-Sources');
+    if(sourcesHeader){
+      try{ aiMessage.sources = JSON.parse(atob(sourcesHeader)); }
+      catch(e){ /* malformed header — just skip citations for this answer */ }
     }
 
     const reader = res.body.getReader();
