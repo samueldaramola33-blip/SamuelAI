@@ -225,7 +225,12 @@ export default async function handler(req, res) {
     "plain language as part of the same sentence or the one right after, e.g. 'this touches on something " +
     "called the Founder Dependency Trap — the idea that a business becomes fragile when it depends on the " +
     "founder's constant presence rather than on repeatable systems.' Only after it's been introduced like " +
-    "that can you refer back to it more casually later in the same conversation.";
+    "that can you refer back to it more casually later in the same conversation. " +
+    "MOST IMPORTANT: always fully answer the actual question the user asked, directly and first — that is " +
+    "the priority in every response, always. A framework is only ever a way to deepen or sharpen an answer " +
+    "you're already giving, never a reason to swerve away from what was actually asked, never a substitute " +
+    "for directly addressing it, and never the opening move of a response. If a question doesn't call for " +
+    "any framework at all, just answer it plainly — most questions won't need one, and that's fine.";
 
   const systemText =
     "You are Xeyra, a helpful AI assistant built by Sammykraft Technologies, a technology and business " +
