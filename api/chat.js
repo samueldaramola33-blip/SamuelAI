@@ -83,7 +83,17 @@ export default async function handler(req, res) {
   let searchContext = '';
   let searchAttempted = false;
   const tavilyKey = process.env.TAVILY_API_KEY;
-  const contextualQuery = recentUserTexts.join(' — ');
+
+  // Questions about "what's trending on X/Twitter" need a different search
+  // query than most current-events questions. Live trend-tracker sites are
+  // often JS-rendered dashboards that don't scrape well into plain text, so
+  // instead of searching for the live page itself, we search for *articles
+  // reporting on* what's trending — those tend to be readable prose that
+  // extracts cleanly.
+  const isXTrendQuestion = /\b(x|twitter)\b.*\b(trend|trending)\b|\btrending\b.*\b(x|twitter)\b/i.test(recentUserTexts.join(' '));
+  const contextualQuery = isXTrendQuestion
+    ? recentUserTexts.join(' — ') + ' — site article reporting today\'s trending topics and hashtags list'
+    : recentUserTexts.join(' — ');
 
   async function aiThinksThisNeedsSearch() {
     try {
@@ -254,7 +264,11 @@ export default async function handler(req, res) {
         "mention where information came from in plain language, but don't fabricate sources beyond what's given. " +
         "If the search results conflict with each other, are unclear, or don't fully answer the question, say " +
         "so honestly instead of confidently picking one version — a caveated but accurate answer is better than " +
-        "a confident but potentially wrong one.\n\n" +
+        "a confident but potentially wrong one. " +
+        "IMPORTANT: when you have real search results like this, lead with the actual answer they contain — " +
+        "don't open with a disclaimer about not being able to browse live feeds or access real-time data, since " +
+        "you clearly just did. Report what the search found directly and confidently; only mention that things " +
+        "can shift quickly as a brief aside if truly relevant, never as the opening line.\n\n" +
         "SEARCH RESULTS:\n" + searchContext
       : searchAttempted
         ? " A live web search was attempted for this question but returned nothing useful, so answer from " +
