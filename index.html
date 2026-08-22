@@ -70,7 +70,7 @@
     --error: #F85149;
   }
   *{box-sizing:border-box;}
-  html,body{height:100%;}
+  html,body{height:100%; height:100dvh;}
   html{scroll-behavior:smooth;}
   body{
     margin:0;
@@ -349,7 +349,7 @@
     background:var(--brass);color:#1a1408;border-color:var(--brass);font-weight:600;
   }
 
-  .panel{flex:1;display:none;min-height:0;flex-direction:column;}
+  .panel{flex:1;display:none;min-height:0;flex-direction:column;position:relative;}
   .panel.active{display:flex;}
 
   /* ---- Chat panel ---- */
@@ -357,6 +357,13 @@
     flex:1;overflow-y:auto;padding:28px 10%;
     display:flex;flex-direction:column;gap:18px;
   }
+  .app-loading{
+    position:absolute; inset:0; z-index:5;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+    background:var(--bg); color:var(--text-faint); font-size:13.5px;
+  }
+  .app-loading .aperture{ animation: apertureBreathe 1.4s ease-in-out infinite; }
+  .app-loading.hidden{ display:none; }
   .empty-state{
     margin:auto;text-align:center;color:var(--text-faint);max-width:420px;
     animation: emptyFadeUp 0.5s ease;
@@ -685,7 +692,7 @@
 
     #imagine-panel{ padding:16px 4%; }
     .imagine-intro h2{ font-size:19px; }
-    .imagine-form{ flex-direction:column; }
+    .imagine-form{ flex-direction:column; align-items:center; }
     .imagine-form textarea{ width:100%; }
     .image-grid{ grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:10px; }
 
@@ -767,6 +774,10 @@
   </div>
 
   <div class="panel active" id="chat-panel">
+    <div id="app-loading" class="app-loading">
+      <div class="aperture" style="width:32px;height:32px;"><svg viewBox="0 0 200 200"><use href="#logo-mark"/></svg></div>
+      <p>Loading your chats…</p>
+    </div>
     <div id="chat-log"></div>
     <div class="composer">
       <button class="attach-btn" id="attach-btn" title="Attach an image or PDF" onclick="document.getElementById('file-input').click()">
@@ -1321,7 +1332,10 @@ onAuthStateChanged(auth, async (user) => {
   updateAccountUI();
   if(user){
     await loadUserData(user);
+  } else {
+    newChat();
   }
+  document.getElementById('app-loading').classList.add('hidden');
 });
 
 /* ---------------------------------------------------------
@@ -1901,8 +1915,12 @@ document.getElementById('imagine-input').addEventListener('input', function(){ a
 
 /* ---------------------------------------------------------
    INIT
+   Note: newChat() is no longer called here directly — it now
+   happens inside onAuthStateChanged, once we actually know
+   whether this is a guest or a signed-in user with saved
+   chats to load. This avoids a flash of "New chat" before
+   a logged-in user's real history appears a moment later.
 --------------------------------------------------------- */
-newChat();
 
 // Register service worker for "Add to Home Screen" installability
 if('serviceWorker' in navigator){
